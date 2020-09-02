@@ -12,7 +12,7 @@ module.exports = {
     assetsPublicPath: '/',
     proxyTable: {
       '/api': {
-        target: 'http://localhost:8443',
+        target: VUE_APP_URL,
         changeOrigin: true,
         pathRewrite: {
           '^/api': ''
