@@ -17,23 +17,22 @@ Vue.prototype.$axios = axios
 Vue.config.productionTip = false
 
 Vue.use(ElementUI)
+Vue.use(mavonEditor)
 
 router.beforeEach((to, from, next) => {
+  if (store.state.user.username && to.path.startsWith('/admin')) {
+      initAdminMenu(router, store)
+  }
+  // 已登录状态下访问 login 页面直接跳转到后台首页
+  if (store.state.username && to.path.startsWith('/login')) {
+    next({
+      path: 'admin/dashboard'
+    })
+  }
   if (to.meta.requireAuth) {
-    if (store.state.user) {
-      axios.get("/authentication").then(resp => {
-        if (resp.data) {
-          next()
-        }else{
-          //否则跳转到登录页面
-          //并存储访问的页面路径（以便在登录后跳转到访问页）
-          next({
-            path:"login",
-            query:{
-              redirect: to.fullPath
-            }
-          })
-        }
+    if (store.state.user.username) {
+      axios.get('/authentication').then(resp => {
+        if (resp) next()
       })
     } else {
       next({
@@ -47,7 +46,39 @@ router.beforeEach((to, from, next) => {
 }
 )
 
-Vue.use(mavonEditor)
+const initAdminMenu = (router, store) => {
+  if (store.state.adminMenus.length > 0) {
+    return
+  }
+  axios.get('/menu').then(resp => {
+    if (resp && resp.status === 200) {
+      var fmtRoutes = formatRoutes(resp.data)
+      router.addRoutes(fmtRoutes)
+      store.commit('initAdminMenu', fmtRoutes)
+    }
+  })
+}
+
+const formatRoutes = (routes) => {
+  let fmtRoutes = []
+  routes.forEach(route => {
+    if (route.children) {
+      route.children = formatRoutes(route.children)
+    }
+    let fmtRoute = {
+      path: route.path,
+      component: resolve => {
+        require(['./components/admin/' + route.component + '.vue'], resolve)
+      },
+      name: route.name,
+      nameZh: route.nameZh,
+      iconCls: route.iconCls,
+      children: route.children
+    }
+    fmtRoutes.push(fmtRoute)
+  })
+  return fmtRoutes
+}
 
 /* eslint-disable no-new */
 new Vue({

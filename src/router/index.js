@@ -36,6 +36,11 @@ export default new Router({
       component: () => import('../components/Register')
     },
     {
+      path: '/admin',
+      name: 'AdminIndex',
+      component: () => import('../components/admin/AdminIndex'),
+    },
+    {
       path: '/admin/content/editor',
       name: 'Editor',
       component: () => import('../components/admin/content/ArticleEditor'),
